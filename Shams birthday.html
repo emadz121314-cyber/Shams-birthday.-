@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Happy Birthday SHAMS</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: black; /* خلفية سوداء */
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    text-align: center;
+    color: white;
+  }
+
+  h1 {
+    font-size: 3em;
+    letter-spacing: 8px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    background: linear-gradient(90deg, red, orange, yellow, green, blue, violet);
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: rainbow 3s linear infinite;
+  }
+
+  @keyframes rainbow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+
+  /* الكيكة */
+  .cake-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    z-index: 20;
+    text-align: center;
+  }
+
+  .cake-base {
+    width: 100%;
+    height: 70px;
+    background: linear-gradient(#a0522d, #5a2e0c);
+    border-radius: 15px 15px 30px 30px;
+    box-shadow: inset -5px -5px 15px rgba(0,0,0,0.4), 5px 5px 10px rgba(0,0,0,0.3);
+    position: relative;
+  }
+
+  .cake-cream {
+    width: 180px;
+    height: 50px;
+    background: linear-gradient(#ff69b4, #ff1493);
+    border-radius: 20px;
+    box-shadow: inset -3px -3px 10px rgba(0,0,0,0.3), 3px 3px 5px rgba(0,0,0,0.2);
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .candle {
+    width: 14px;
+    height: 40px;
+    background: white;
+    border-radius: 4px;
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .flame {
+    width: 18px;
+    height: 18px;
+    background: radial-gradient(circle, gold, orange, red);
+    border-radius: 50%;
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: flicker 0.5s infinite alternate;
+  }
+
+  @keyframes flicker {
+    0% { transform: translateX(-50%) scale(1); }
+    100% { transform: translateX(-50%) scale(1.3); }
+  }
+
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎉 Happy Birthday SHAMS 🎉</h1>
+
+<div class="cake-container">
+  <div class="cake-base"></div>
+  <div class="cake-cream"></div>
+  <div class="candle">
+    <div class="flame"></div>
+  </div>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<script>
+// المفرقعات
+const canvas = document.getElementById('fireworks');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class Particle {
+  constructor(x, y, color, dx, dy, dz) {
+    this.x = x;
+    this.y = y;
+    this.z = dz;
+    this.color = color;
+    this.dx = dx;
+    this.dy = dy;
+    this.dz = dz/50;
+    this.radius = 2 + Math.random()*2;
+    this.life = 0;
+    this.done = false;
+  }
+  update() {
+    this.x += this.dx;
+    this.y += this.dy;
+    this.z += this.dz;
+    this.radius *= 0.96;
+    this.life++;
+    if(this.life > 50 || this.radius < 0.5) this.done = true;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y - this.z, this.radius, 0, Math.PI*2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  }
+}
+
+function heartShape(t) {
+  const x = 16*Math.pow(Math.sin(t),3);
+  const y = - (13*Math.cos(t) - 5*Math.cos(2*t) - 2*Math.cos(3*t) - Math.cos(4*t));
+  return {x,y};
+}
+
+class Firework {
+  constructor() {
+    this.x = Math.random()*canvas.width;
+    this.y = canvas.height;
+    this.targetY = Math.random()*canvas.height/2;
+    this.exploded = false;
+    this.particles = [];
+    this.color = `hsl(${Math.random()*360}, 100%, 50%)`;
+  }
+
+  update() {
+    if(!this.exploded) {
+      this.y -= 5;
+      if(this.y <= this.targetY) {
+        this.exploded = true;
+        for(let i=0;i<100;i++){
+          const t = i/100*2*Math.PI;
+          const {x,y} = heartShape(t);
+          this.particles.push(new Particle(this.x + x*10, this.y + y*10, this.color, (Math.random()-0.5)*2, (Math.random()-0.5)*2, Math.random()*20));
+        }
+      }
+    } else {
+      this.particles.forEach(p=>p.update());
+      this.particles = this.particles.filter(p=>!p.done);
+    }
+  }
+
+  draw() {
+    if(!this.exploded){
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 2,0,Math.PI*2);
+      ctx.fillStyle = this.color;
+      ctx.fill();
+    } else {
+      this.particles.forEach(p=>p.draw());
+    }
+  }
+}
+
+let fireworks = [];
+function animate() {
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(Math.random() < 0.02) fireworks.push(new Firework());
+  fireworks.forEach(fw=>{fw.update(); fw.draw();});
+  fireworks = fireworks.filter(fw=>!fw.exploded || fw.particles.length>0);
+  requestAnimationFrame(animate);
+}
+animate();
+window.addEventListener('resize', ()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// بالونات (نجوم، قلوب، شمس)
+class Balloon {
+  constructor(shape) {
+    this.x = Math.random() * window.innerWidth;
+    this.y = window.innerHeight + 100;
+    this.speed = Math.random()*1 + 0.5;
+    this.shape = shape;
+    this.element = document.createElement('div');
+    this.element.style.position = 'absolute';
+    this.element.style.left = this.x + 'px';
+    this.element.style.bottom = '-100px';
+    this.element.style.zIndex = '5';
+    this.drawShape();
+    document.body.appendChild(this.element);
+  }
+
+  drawShape() {
+    if(this.shape === "heart") {
+      this.element.innerHTML = "❤️";
+    } else if(this.shape === "star") {
+      this.element.innerHTML = "⭐";
+    } else if(this.shape === "sun") {
+      this.element.innerHTML = "☀️";
+    } else {
+      this.element.innerHTML = "🎈";
+    }
+    this.element.style.fontSize = "40px";
+  }
+
+  update() {
+    this.y -= this.speed;
+    this.element.style.bottom = this.y + 'px';
+    if(this.y < -150) { this.element.remove(); return false; }
+    return true;
+  }
+}
+
+let balloons = [];
+function animateBalloons() {
+  if(Math.random() < 0.02) {
+    const shapes = ["heart","star","sun"];
+    const shape = shapes[Math.floor(Math.random()*shapes.length)];
+    balloons.push(new Balloon(shape));
+  }
+  balloons = balloons.filter(b=>b.update());
+  requestAnimationFrame(animateBalloons);
+}
+animateBalloons();
+</script>
+</body>
+</html>
